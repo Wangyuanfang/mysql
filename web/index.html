@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>订单管理系统 - 订单下载</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 800px;
+            width: 100%;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1em;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            margin-top: 10px;
+        }
+
+        .status-badge.online {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-badge.offline {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .form-group select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1em;
+            background: white;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-group select:disabled {
+            background: #f5f5f5;
+            cursor: not-allowed;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 14px 25px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: #e0e0e0;
+        }
+
+        .progress-container {
+            display: none;
+            margin-bottom: 25px;
+        }
+
+        .progress-container.active {
+            display: block;
+        }
+
+        .progress-bar-wrapper {
+            background: #f0f0f0;
+            border-radius: 10px;
+            height: 30px;
+            overflow: hidden;
+            margin-bottom: 10px;
+            position: relative;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+
+        .progress-text {
+            text-align: center;
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .stats-container {
+            display: none;
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+
+        .stats-container.active {
+            display: block;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .stat-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.8em;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .orders-preview {
+            display: none;
+            margin-top: 25px;
+        }
+
+        .orders-preview.active {
+            display: block;
+        }
+
+        .orders-preview h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .orders-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .orders-table th,
+        .orders-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .orders-table th {
+            background: #667eea;
+            color: white;
+            font-weight: 600;
+        }
+
+        .orders-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .orders-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .order-status {
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .order-status.pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .order-status.confirmed {
+            background: #cce5ff;
+            color: #004085;
+        }
+
+        .order-status.shipped {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .order-status.delivered {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .order-status.cancelled {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .message {
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .message.active {
+            display: block;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .message.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            text-align: center;
+            color: #666;
+            padding: 20px;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 25px;
+            }
+
+            .header h1 {
+                font-size: 1.5em;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .orders-table {
+                font-size: 0.85em;
+            }
+
+            .orders-table th,
+            .orders-table td {
+                padding: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📦 订单管理系统</h1>
+            <p>选择地区下载订单数据</p>
+            <span id="serverStatus" class="status-badge offline">连接中...</span>
+        </div>
+
+        <div id="messageBox" class="message"></div>
+
+        <div class="form-group">
+            <label for="regionSelect">选择地区：</label>
+            <select id="regionSelect" disabled>
+                <option value="">加载地区列表中...</option>
+            </select>
+        </div>
+
+        <div class="button-group">
+            <button id="previewBtn" class="btn btn-secondary" disabled>
+                <span>👁️</span>
+                <span>预览订单</span>
+            </button>
+            <button id="downloadBtn" class="btn btn-primary" disabled>
+                <span>⬇️</span>
+                <span>下载订单</span>
+            </button>
+        </div>
+
+        <div id="progressContainer" class="progress-container">
+            <div class="progress-bar-wrapper">
+                <div id="progressBar" class="progress-bar" style="width: 0%">
+                    <span id="progressPercent">0%</span>
+                </div>
+            </div>
+            <div id="progressText" class="progress-text">准备下载...</div>
+        </div>
+
+        <div id="statsContainer" class="stats-container">
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-value" id="statOrderCount">-</div>
+                    <div class="stat-label">订单数量</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="statTotalAmount">-</div>
+                    <div class="stat-label">总金额</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="statRegionName">-</div>
+                    <div class="stat-label">当前地区</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="ordersPreview" class="orders-preview">
+            <h3>订单列表预览</h3>
+            <div id="ordersTableContainer"></div>
+        </div>
+    </div>
+
+    <script>
+        // 配置
+        const API_BASE_URL = window.location.origin;
+
+        // 状态管理
+        let regions = [];
+        let currentOrders = [];
+
+        // DOM 元素
+        const elements = {
+            regionSelect: document.getElementById('regionSelect'),
+            previewBtn: document.getElementById('previewBtn'),
+            downloadBtn: document.getElementById('downloadBtn'),
+            progressContainer: document.getElementById('progressContainer'),
+            progressBar: document.getElementById('progressBar'),
+            progressPercent: document.getElementById('progressPercent'),
+            progressText: document.getElementById('progressText'),
+            statsContainer: document.getElementById('statsContainer'),
+            ordersPreview: document.getElementById('ordersPreview'),
+            ordersTableContainer: document.getElementById('ordersTableContainer'),
+            messageBox: document.getElementById('messageBox'),
+            serverStatus: document.getElementById('serverStatus')
+        };
+
+        // 显示消息
+        function showMessage(message, type = 'info') {
+            elements.messageBox.textContent = message;
+            elements.messageBox.className = `message ${type} active`;
+
+            setTimeout(() => {
+                elements.messageBox.classList.remove('active');
+            }, 5000);
+        }
+
+        // 更新服务器状态
+        function updateServerStatus(online) {
+            elements.serverStatus.textContent = online ? '🟢 服务器在线' : '🔴 服务器离线';
+            elements.serverStatus.className = `status-badge ${online ? 'online' : 'offline'}`;
+        }
+
+        // 检查服务器健康状态
+        async function checkHealth() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/health`);
+                if (response.ok) {
+                    updateServerStatus(true);
+                    return true;
+                }
+                updateServerStatus(false);
+                return false;
+            } catch (error) {
+                updateServerStatus(false);
+                return false;
+            }
+        }
+
+        // 加载地区列表
+        async function loadRegions() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/regions`);
+                if (!response.ok) {
+                    throw new Error('加载地区列表失败');
+                }
+
+                const data = await response.json();
+                if (data.success) {
+                    regions = data.data;
+                    populateRegionSelect();
+                    showMessage(`成功加载 ${regions.length} 个地区`, 'success');
+                } else {
+                    throw new Error(data.error || '未知错误');
+                }
+            } catch (error) {
+                showMessage(`加载地区失败: ${error.message}`, 'error');
+                elements.regionSelect.innerHTML = '<option value="">加载失败，请刷新页面</option>';
+            }
+        }
+
+        // 填充地区下拉框
+        function populateRegionSelect() {
+            elements.regionSelect.innerHTML = '<option value="">-- 请选择地区 --</option>';
+
+            regions.forEach(region => {
+                const option = document.createElement('option');
+                option.value = region.region_code;
+                option.textContent = `${region.region_name} (${region.region_code})`;
+                if (region.parent_region_name) {
+                    option.textContent += ` - ${region.parent_region_name}`;
+                }
+                elements.regionSelect.appendChild(option);
+            });
+
+            elements.regionSelect.disabled = false;
+            elements.previewBtn.disabled = false;
+            elements.downloadBtn.disabled = false;
+        }
+
+        // 获取订单列表
+        async function getOrders(regionCode) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/regions/${regionCode}/orders`);
+                if (!response.ok) {
+                    if (response.status === 404) {
+                        throw new Error('地区不存在');
+                    }
+                    throw new Error('获取订单失败');
+                }
+
+                const data = await response.json();
+                if (data.success) {
+                    return data.data;
+                } else {
+                    throw new Error(data.error || '未知错误');
+                }
+            } catch (error) {
+                throw error;
+            }
+        }
+
+        // 预览订单
+        async function previewOrders() {
+            const regionCode = elements.regionSelect.value;
+            if (!regionCode) {
+                showMessage('请先选择地区', 'error');
+                return;
+            }
+
+            elements.previewBtn.disabled = true;
+            elements.previewBtn.innerHTML = '<span class="spinner"></span><span>加载中...</span>';
+
+            try {
+                currentOrders = await getOrders(regionCode);
+
+                if (currentOrders.length === 0) {
+                    showMessage('该地区暂无订单数据', 'info');
+                    elements.ordersPreview.classList.remove('active');
+                    elements.statsContainer.classList.remove('active');
+                } else {
+                    displayOrders(currentOrders);
+                    displayStats(currentOrders, regionCode);
+                    showMessage(`成功加载 ${currentOrders.length} 条订单`, 'success');
+                }
+            } catch (error) {
+                showMessage(`预览失败: ${error.message}`, 'error');
+                elements.ordersPreview.classList.remove('active');
+                elements.statsContainer.classList.remove('active');
+            } finally {
+                elements.previewBtn.disabled = false;
+                elements.previewBtn.innerHTML = '<span>👁️</span><span>预览订单</span>';
+            }
+        }
+
+        // 显示订单列表
+        function displayOrders(orders) {
+            const statusMap = {
+                'pending': '待处理',
+                'confirmed': '已确认',
+                'shipped': '已发货',
+                'delivered': '已送达',
+                'cancelled': '已取消'
+            };
+
+            let html = `
+                <table class="orders-table">
+                    <thead>
+                        <tr>
+                            <th>订单号</th>
+                            <th>客户姓名</th>
+                            <th>产品名称</th>
+                            <th>数量</th>
+                            <th>总金额</th>
+                            <th>状态</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            orders.forEach(order => {
+                html += `
+                    <tr>
+                        <td>${order.order_number}</td>
+                        <td>${order.customer_name}</td>
+                        <td>${order.product_name}</td>
+                        <td>${order.quantity}</td>
+                        <td>¥${parseFloat(order.total_amount).toFixed(2)}</td>
+                        <td><span class="order-status ${order.order_status}">${statusMap[order.order_status] || order.order_status}</span></td>
+                    </tr>
+                `;
+            });
+
+            html += `
+                    </tbody>
+                </table>
+            `;
+
+            elements.ordersTableContainer.innerHTML = html;
+            elements.ordersPreview.classList.add('active');
+        }
+
+        // 显示统计信息
+        function displayStats(orders, regionCode) {
+            const totalAmount = orders.reduce((sum, order) => sum + parseFloat(order.total_amount), 0);
+            const region = regions.find(r => r.region_code === regionCode);
+
+            document.getElementById('statOrderCount').textContent = orders.length;
+            document.getElementById('statTotalAmount').textContent = `¥${totalAmount.toFixed(2)}`;
+            document.getElementById('statRegionName').textContent = region ? region.region_name : regionCode;
+
+            elements.statsContainer.classList.add('active');
+        }
+
+        // 模拟下载进度
+        function simulateProgress(callback) {
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += Math.random() * 30;
+                if (progress >= 90) {
+                    progress = 90;
+                }
+                updateProgress(progress);
+            }, 200);
+
+            return () => {
+                clearInterval(interval);
+                updateProgress(100);
+                setTimeout(callback, 300);
+            };
+        }
+
+        // 更新进度条
+        function updateProgress(percent) {
+            percent = Math.min(100, Math.max(0, percent));
+            elements.progressBar.style.width = `${percent}%`;
+            elements.progressPercent.textContent = `${Math.round(percent)}%`;
+
+            if (percent < 30) {
+                elements.progressText.textContent = '正在连接服务器...';
+            } else if (percent < 60) {
+                elements.progressText.textContent = '正在获取订单数据...';
+            } else if (percent < 90) {
+                elements.progressText.textContent = '正在生成CSV文件...';
+            } else if (percent < 100) {
+                elements.progressText.textContent = '即将完成...';
+            } else {
+                elements.progressText.textContent = '下载完成！';
+            }
+        }
+
+        // 下载订单
+        async function downloadOrders() {
+            const regionCode = elements.regionSelect.value;
+            if (!regionCode) {
+                showMessage('请先选择地区', 'error');
+                return;
+            }
+
+            elements.downloadBtn.disabled = true;
+            elements.downloadBtn.innerHTML = '<span class="spinner"></span><span>下载中...</span>';
+            elements.progressContainer.classList.add('active');
+            updateProgress(0);
+
+            const finishProgress = simulateProgress(async () => {
+                try {
+                    const response = await fetch(`${API_BASE_URL}/api/regions/${regionCode}/orders/download`);
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.error || '下载失败');
+                    }
+
+                    // 获取文件名
+                    const contentDisposition = response.headers.get('Content-Disposition');
+                    let filename = `orders_${regionCode}_${new Date().getTime()}.csv`;
+                    if (contentDisposition) {
+                        const matches = /filename=([^;]+)/.exec(contentDisposition);
+                        if (matches && matches[1]) {
+                            filename = matches[1].trim();
+                        }
+                    }
+
+                    // 下载文件
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+
+                    showMessage(`订单文件下载成功！文件名: ${filename}`, 'success');
+                } catch (error) {
+                    showMessage(`下载失败: ${error.message}`, 'error');
+                    updateProgress(0);
+                } finally {
+                    setTimeout(() => {
+                        elements.progressContainer.classList.remove('active');
+                        elements.downloadBtn.disabled = false;
+                        elements.downloadBtn.innerHTML = '<span>⬇️</span><span>下载订单</span>';
+                    }, 2000);
+                }
+            });
+
+            // 开始下载时完成进度模拟
+            setTimeout(finishProgress, 1000);
+        }
+
+        // 事件监听
+        elements.regionSelect.addEventListener('change', () => {
+            elements.ordersPreview.classList.remove('active');
+            elements.statsContainer.classList.remove('active');
+        });
+
+        elements.previewBtn.addEventListener('click', previewOrders);
+        elements.downloadBtn.addEventListener('click', downloadOrders);
+
+        // 初始化
+        async function init() {
+            const isOnline = await checkHealth();
+            if (isOnline) {
+                await loadRegions();
+            } else {
+                showMessage('无法连接到服务器，请确保服务端已启动', 'error');
+            }
+        }
+
+        // 页面加载完成后初始化
+        init();
+    </script>
+</body>
+</html>

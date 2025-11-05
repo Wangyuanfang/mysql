@@ -10,12 +10,16 @@ import json
 import csv
 from io import StringIO
 from datetime import datetime
-from flask import Flask, jsonify, request, send_file, Response
+from flask import Flask, jsonify, request, send_file, Response, send_from_directory
+from flask_cors import CORS
 import mysql.connector
 from mysql.connector import Error
 import configparser
 
 app = Flask(__name__)
+
+# 启用CORS跨域支持
+CORS(app)
 
 # 数据库配置
 def get_db_config():
@@ -51,6 +55,18 @@ def get_db_connection():
     except Error as e:
         print(f"数据库连接错误: {e}")
         return None
+
+@app.route('/')
+def index():
+    """主页 - 返回前端页面"""
+    web_dir = os.path.join(os.path.dirname(__file__), '..', 'web')
+    return send_from_directory(web_dir, 'index.html')
+
+@app.route('/web/<path:filename>')
+def serve_static(filename):
+    """提供静态文件服务"""
+    web_dir = os.path.join(os.path.dirname(__file__), '..', 'web')
+    return send_from_directory(web_dir, filename)
 
 @app.route('/api/health', methods=['GET'])
 def health_check():
@@ -264,12 +280,20 @@ if __name__ == '__main__':
     port = int(os.getenv('SERVER_PORT', 5000))
     debug = os.getenv('DEBUG', 'False').lower() == 'true'
 
-    print(f"订单系统服务端启动在端口 {port}")
-    print(f"API文档:")
-    print(f"  - GET  /api/health - 健康检查")
-    print(f"  - GET  /api/regions - 获取所有地区")
-    print(f"  - GET  /api/regions/<region_code>/orders - 获取指定地区订单")
-    print(f"  - GET  /api/regions/<region_code>/orders/download - 下载指定地区订单")
-    print(f"  - GET  /api/orders/stats - 获取订单统计信息")
+    print("=" * 60)
+    print(f"订单系统服务端启动成功！")
+    print("=" * 60)
+    print(f"\n🌐 Web界面访问地址:")
+    print(f"   http://localhost:{port}")
+    print(f"   http://127.0.0.1:{port}")
+    print(f"\n📡 API接口文档:")
+    print(f"   GET  /api/health - 健康检查")
+    print(f"   GET  /api/regions - 获取所有地区")
+    print(f"   GET  /api/regions/<region_code>/orders - 获取指定地区订单")
+    print(f"   GET  /api/regions/<region_code>/orders/download - 下载指定地区订单")
+    print(f"   GET  /api/orders/stats - 获取订单统计信息")
+    print("\n" + "=" * 60)
+    print(f"服务器运行在端口 {port}，按 Ctrl+C 停止服务")
+    print("=" * 60 + "\n")
 
     app.run(host='0.0.0.0', port=port, debug=debug)
